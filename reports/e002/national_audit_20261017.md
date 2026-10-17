@@ -47,3 +47,9 @@ This script does **not** measure turnout or abstention; official section-detail 
 Artifacts:
 - [2022 audit](https://github.com/romulobrito/electoral-spatial-analysis/actions/runs/39046994539)
 - [2026 audit](https://github.com/romulobrito/electoral-spatial-analysis/actions/runs/39046994539)
+
+## Independent arithmetic checks (2026-10-17)
+
+The downloaded GitHub Actions JSON artifacts were independently inspected. For every category (`valid`, `blank`, `null`, `unclassified`) in 2022 rounds 1 and 2 and 2026 round 1, both (a) the sum of the 28 `state_aggregates` groups (27 UFs and exterior) and (b) the sum of records in `candidates_and_vote_options` reproduce the corresponding national values **exactly**: 12 of 12 category-round reconciliation cases passed by both routes. The national three-row snapshot is versioned at [`national_voting_totals_20261017.csv`](national_voting_totals_20261017.csv). The input SHA256 is in every row, allowing repeatable validation when source archives are re-downloaded.
+
+**Important:** these checks confirm internal arithmetic consistency, not that every original vote record is valid or that any geographic matching between years has been established. The dated 2026 TSE article remains an ambiguous reference, not proof of an incorrect national archive.
