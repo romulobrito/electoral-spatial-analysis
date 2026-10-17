@@ -82,4 +82,4 @@ def test_zip_and_reference(tmp_path):
 def test_partial_2026_reference():
     row = ROWS[0].replace("2022;", "2026;")
     data = audit_csv(io.StringIO(HEADER + row), year=2026)
-    assert "not final" in add_reference_audit(data)["reference"]["kind"]
+    assert add_reference_audit(data)["reference"]["comparable"] is False
