@@ -128,8 +128,8 @@ def study(rows: list[dict], *, samples: int = 400, seed: int = 2718) -> dict:
     for _ in range(samples):
         sample = [row for _ in states for row in by_state[rng.choice(states)]]
         computed = stats(sample)
-        for name in distribution:
-            distribution[name].append(computed[name])
+        for name, values in distribution.items():
+            values.append(computed[name])
     intervals = {}
     for name, values in distribution.items():
         values.sort()
