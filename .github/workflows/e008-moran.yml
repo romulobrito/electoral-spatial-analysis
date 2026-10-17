@@ -1,0 +1,77 @@
+name: E008 official municipal geometry and Moran residual diagnostics
+on:
+  push:
+    branches: [feat/e008-spatial-autocorrelation]
+    paths:
+      - '.github/workflows/e008-moran.yml'
+      - 'src/electoral_analysis/spatial_moran.py'
+      - 'src/electoral_analysis/spatial_figure.py'
+      - 'tests/test_spatial_moran.py'
+      - 'tests/test_spatial_figure.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  moran:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python research and GIS tools
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install geopandas pyogrio shapely
+      - name: Run tests and static checks
+        run: |
+          python -m pytest -q
+          python -m ruff check src tests
+      - name: Recover source-verified aggregate municipal observations
+        uses: actions/download-artifact@v4
+        with:
+          name: e005-neutral-aggregated-results
+          path: .
+          run-id: 39069589159
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Recover source-verified official 2022 Census
+        uses: actions/download-artifact@v4
+        with:
+          name: e006-ibge-turnout-validation
+          path: .
+          run-id: 39072126444
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download official IBGE geography and municipality crosswalk
+        run: |
+          mkdir -p data/e008
+          curl --fail --location --retry 3 --connect-timeout 20 --max-time 720 --silent --show-error \
+            'https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2022/Brasil/BR/BR_Municipios_2022.zip' \
+            --output data/e008/municipios_2022.zip
+          echo '9c904fa1feb978a89042bfecd7758e571266f285d6122a4ff02ffe37bffb76a2  data/e008/municipios_2022.zip' | sha256sum --check
+          curl --fail --location --retry 3 --silent --show-error --max-time 120 \
+            'https://cdn.tse.jus.br/estatistica/sead/odsele/municipio_tse_ibge/municipio_tse_ibge.zip' \
+            --output data/e008/municipio_tse_ibge.zip
+          echo '68328ddc166806594a2aab5809ac9aa602153535d6b8a71e886c337f9f3631ca  data/e008/municipio_tse_ibge.zip' | sha256sum --check
+      - name: Calculate queen/rook edges and permutation Moran tests
+        run: |
+          python -m electoral_analysis.spatial_moran \
+            --panel outputs/e005-results/municipal_results.json \
+            --census data/reference/ibge_4714_2022.json \
+            --crosswalk data/e008/municipio_tse_ibge.zip \
+            --geometry data/e008/municipios_2022.zip \
+            --output-dir outputs/e008/spatial
+      - name: Render explanatory Moran comparison figure
+        run: |
+          python -m electoral_analysis.spatial_figure \
+            outputs/e008/spatial/moran_results.json \
+            --out outputs/e008/spatial/moran_comparison.svg
+      - name: Retain small research figures and diagnostics (not raw geography)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e008-moran-research
+          path: outputs/e008/spatial/
+          retention-days: 14
+          if-no-files-found: warn
