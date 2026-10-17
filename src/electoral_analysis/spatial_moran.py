@@ -7,7 +7,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import math
 import random
 import zipfile
 from collections import Counter, defaultdict
@@ -16,7 +15,10 @@ from pathlib import Path
 from .ibge_turnout import _fit_ridge, join_turnout, validate_ibge_response
 from .municipal_crosswalk import read_crosswalk_zip
 from .residual_diagnostics import (
-    IBGE_SHA, PANEL_SHA, REGIONAL_SHRINKAGE, STATE_REGION,
+    IBGE_SHA,
+    PANEL_SHA,
+    REGIONAL_SHRINKAGE,
+    STATE_REGION,
 )
 
 GEOMETRY_SHA = "9c904fa1feb978a89042bfecd7758e571266f285d6122a4ff02ffe37bffb76a2"
