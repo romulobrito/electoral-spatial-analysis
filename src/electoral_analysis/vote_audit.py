@@ -1,5 +1,6 @@
 """Stream aggregate presidential voting results from official TSE ZIPs; no turnout inference."""
 from __future__ import annotations
+
 import argparse
 import csv
 import io
