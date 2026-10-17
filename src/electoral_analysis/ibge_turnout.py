@@ -5,7 +5,9 @@ Observed aggregate turnout only, never candidate support or persuasion propensit
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
+import io
 import json
 import math
 import random
@@ -85,6 +87,11 @@ def fetch_ibge(path: Path) -> dict:
         raw = response.read(15_000_001)
     if len(raw) > 15_000_000:
         raise ValueError("Census response exceeds size limit")
+    if raw.startswith(bytes.fromhex("1f8b")):
+        with gzip.GzipFile(fileobj=io.BytesIO(raw)) as compressed:
+            raw = compressed.read(15_000_001)
+    if len(raw) > 15_000_000:
+        raise ValueError("Decoded Census JSON exceeds size limit")
     validate_ibge_response(json.loads(raw))
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(raw)
