@@ -1,0 +1,44 @@
+name: E006 inspect official 2022 Census API
+on:
+  push:
+    branches: [feat/e006-ibge-turnout-analysis]
+    paths: ['.github/workflows/e006-ibge-probe.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Probe IBGE 4714 with bounded HTTP reads
+        run: |
+          python - <<'PY'
+          import json,urllib.request,hashlib
+          from pathlib import Path
+          url="https://servicodados.ibge.gov.br/api/v3/agregados/4714/periodos/2022/variaveis/93%7C6318%7C614?localidades=N6%5Ball%5D"
+          req=urllib.request.Request(url,headers={"User-Agent":"electoral-spatial-analysis-research/0.1","Accept":"application/json"})
+          with urllib.request.urlopen(req,timeout=70) as res:
+              data=res.read(35000000)
+              status=res.status
+          parsed=json.loads(data)
+          overview=[]
+          for obj in parsed:
+              sub=[]
+              for block in obj.get("resultados",[]):
+                  sub.append({"classificacoes":block.get("classificacoes"),"sample_series":block.get("series",[])[:2],"series_count":len(block.get("series",[]))})
+              overview.append({"variable_id":obj.get("id"),"variable_name":obj.get("variavel"),"unit":obj.get("unidade"),"results":sub[:1]})
+          report={"status":status,"source":url,"bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"variables":overview}
+          Path("probe.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(report,ensure_ascii=False)[:13000])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e006-ibge-api-probe
+          path: probe.json
+          retention-days: 14
