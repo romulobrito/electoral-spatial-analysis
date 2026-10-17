@@ -1,0 +1,67 @@
+name: E004 investigate 2026 section-key discrepancy
+on:
+  push:
+    branches: [feat/e004-territorial-integrity]
+    paths: ['.github/workflows/e004-section-diff.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - name: Download both official 2026 sources
+        run: |
+          python -m electoral_analysis.cli download president_2026 --output-dir data/2026
+          python -m electoral_analysis.cli download turnout_2026 --output-dir data/2026
+      - name: Locate symmetric difference of section-round keys
+        run: |
+          mkdir -p outputs/e004
+          python - <<'PY'
+          import csv,io,json,zipfile
+          from pathlib import Path
+          from collections import defaultdict
+          d=Path("data/2026")
+          def scan(filename):
+              keys=set()
+              totals=defaultdict(int)
+              with zipfile.ZipFile(d/filename) as z:
+                  for member in z.namelist():
+                      if not member.endswith(".csv"): continue
+                      with z.open(member) as f, io.TextIOWrapper(f,encoding="latin-1",newline="") as inp:
+                          rd=csv.DictReader(inp,delimiter=";")
+                          for row in rd:
+                              if row["DS_CARGO"].strip().lower()!="presidente":continue
+                              key=(int(row["NR_TURNO"]),row["SG_UF"],str(int(row["CD_MUNICIPIO"])),str(int(row["NR_ZONA"])),str(int(row["NR_SECAO"])))
+                              keys.add(key)
+                              if filename.startswith("president"):
+                                  totals[key]+=int(row["QT_VOTOS"])
+                              else:
+                                  totals[key]=int(row["QT_COMPARECIMENTO"])
+              return keys,totals
+          votes,votecounts=scan("president_2026.zip")
+          detail,detailcounts=scan("turnout_2026.zip")
+          only_detail=sorted(detail-votes)
+          only_votes=sorted(votes-detail)
+          report={
+              "vote_keys":len(votes),"detail_keys":len(detail),
+              "only_detail":[{"key":key,"attendance":detailcounts[key]} for key in only_detail],
+              "only_vote":[{"key":key,"total_votes":votecounts[key]} for key in only_votes],
+              "shared_key_total_mismatches":[{"key":key,"votes":votecounts[key],"attendance":detailcounts[key]}
+                   for key in sorted(votes&detail) if votecounts[key]!=detailcounts[key]][:100],
+          }
+          Path("outputs/e004/section_key_diff_2026.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+          print(json.dumps(report,ensure_ascii=False)[:8000])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e004-section-key-diff
+          path: outputs/e004/
+          retention-days: 14
