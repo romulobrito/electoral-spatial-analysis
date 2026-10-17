@@ -34,6 +34,8 @@ def audit_detail_archive(path: Path, year: int) -> dict:
     seen: dict[tuple, tuple[int, int, int]] = {}
     duplicates = 0
     by_source = []
+    nonconserving = 0
+    discrepancy_samples = []
     with ZipFile(path) as z:
         for name in sorted(members):
             nrows = 0
@@ -64,7 +66,14 @@ def audit_detail_archive(path: Path, year: int) -> dict:
                             not all(identity) or min(counts) < 0):
                         raise ValueError(f"{name}:{idx} invalid year/turn/identity/count")
                     if counts[0] != counts[1] + counts[2]:
-                        raise ValueError(f"{name}:{idx} aptos != comparecimento + abstencoes")
+                        nonconserving += 1
+                        if len(discrepancy_samples) < 50:
+                            discrepancy_samples.append({"member": name, "line": idx,
+                                                        "key": [turn, *identity],
+                                                        "eligible": counts[0], "attended": counts[1],
+                                                        "abstained": counts[2],
+                                                        "difference": counts[0] - counts[1] - counts[2]})
+                        continue
                     key = (turn, *identity)
                     previous = seen.get(key)
                     if previous is not None:
@@ -90,6 +99,9 @@ def audit_detail_archive(path: Path, year: int) -> dict:
         "csv_members": len(members), "input_president_rows": sum(x["president_rows"] for x in by_source),
         "unique_presidential_sections": len(seen),
         "identical_duplicate_rows": duplicates,
+        "quarantined_nonconserving_rows": nonconserving,
+        "nonconserving_samples": discrepancy_samples,
+        "counts_are_partial_if_quarantined": bool(nonconserving),
         "file_inventory": by_source,
         "national_by_round": [
             {"round": turn, "sections": v[0], "eligible": v[1],
