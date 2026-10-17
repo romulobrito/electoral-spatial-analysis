@@ -4,7 +4,6 @@ from __future__ import annotations
 import csv
 import io
 import json
-from collections import Counter
 from pathlib import Path
 from zipfile import ZipFile
 
