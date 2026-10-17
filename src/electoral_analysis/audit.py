@@ -93,7 +93,8 @@ def audit_turnout_zip(zip_path: str | Path, *, year: int, member_name: str | Non
         member_name = members[0]
     if member_name not in members:
         raise ValueError("Selected CSV member not found")
-    with ZipFile(path) as archive, archive.open(member_name) as binary:
-        with io.TextIOWrapper(binary, encoding="latin-1", newline="") as handle:
-            result = audit_turnout_csv(handle, year=year, max_rows=max_rows)
+    with (ZipFile(path) as archive,
+          archive.open(member_name) as binary,
+          io.TextIOWrapper(binary, encoding="latin-1", newline="") as handle):
+        result = audit_turnout_csv(handle, year=year, max_rows=max_rows)
     return {"source_zip": path.name, "csv_member": member_name, **result}
