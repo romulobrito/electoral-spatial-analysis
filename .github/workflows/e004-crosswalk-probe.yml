@@ -1,0 +1,36 @@
+name: E004 official municipality crosswalk probe
+on:
+  push:
+    branches: [feat/e004-territorial-integrity]
+    paths: ['.github/workflows/e004-crosswalk-probe.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download official crosswalk and inspect
+        run: |
+          python - <<'PY'
+          import io, zipfile, urllib.request, hashlib, json
+          from pathlib import Path
+          url = "https://cdn.tse.jus.br/estatistica/sead/odsele/municipio_tse_ibge/municipio_tse_ibge.zip"
+          request = urllib.request.Request(url,headers={"User-Agent":"electoral-spatial-analysis/0.1"})
+          with urllib.request.urlopen(request,timeout=60) as response:
+              data=response.read(40000000)
+              print("final_url",response.geturl())
+          print("byte_length",len(data),"sha256",hashlib.sha256(data).hexdigest())
+          with zipfile.ZipFile(io.BytesIO(data)) as z:
+              for x in z.infolist():
+                  print("member",x.filename,x.file_size)
+                  if x.filename.lower().endswith(".csv"):
+                      with z.open(x) as f:
+                          for i in range(3):
+                              print("csv_line",i,repr(f.readline(16000).decode("latin-1",errors="replace").strip()))
+          PY
