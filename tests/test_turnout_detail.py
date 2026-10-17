@@ -41,7 +41,7 @@ def test_conflicting_duplicate_fails(tmp_path):
 
 def test_bad_conservation_fails(tmp_path):
     p = tmp_path / "detail.zip"
-    make_zip(p, {"SP.csv": H + A.replace("250;50", "249;50")})
+    make_zip(p, {"SP.csv": H + A.replace("250;50", "249;50") + C})
     result = audit_detail_archive(p, 2022)
     assert result["quarantined_nonconserving_rows"] == 1
     assert result["counts_are_partial_if_quarantined"]
