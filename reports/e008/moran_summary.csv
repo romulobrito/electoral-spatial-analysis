@@ -1,0 +1,4 @@
+model,queen_moran_I,queen_permutation_p,rook_moran_I,rook_permutation_p,municipalities_connected,permutations
+persistence,0.4682718456618533,0.002,0.4689039804734025,0.002,5567,499
+ridge,0.4972549727134963,0.002,0.4981672863548296,0.002,5567,499
+ridge_regional,0.39586719859356834,0.002,0.39684890912372695,0.002,5567,499
