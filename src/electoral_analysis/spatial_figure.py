@@ -1,4 +1,4 @@
-"""Lightweight explanatory SVG of Moran's I diagnostics: no targeting maps."""
+# ruff: noqa: ISC004  # Wrapped explanatory SVG literals.\n"""Lightweight explanatory SVG of Moran's I diagnostics: no targeting maps."""
 from __future__ import annotations
 
 import argparse
