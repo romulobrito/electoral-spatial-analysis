@@ -4,7 +4,10 @@ from zipfile import ZipFile
 import pytest
 
 from electoral_analysis.vote_audit import (
-    add_reference_audit, audit_csv, audit_zip, vote_category,
+    add_reference_audit,
+    audit_csv,
+    audit_zip,
+    vote_category,
 )
 
 HEADER = (
