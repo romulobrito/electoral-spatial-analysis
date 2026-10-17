@@ -61,3 +61,14 @@ def test_pairing_and_unmatched():
     assert p["paired"] == 1
     assert p["2026_only"] == 1
     assert round(p["rows"][0]["delta_turnout_pp"], 8) == -5.0
+
+def test_duplicated_nonconserving_records_count_once(tmp_path):
+    p = tmp_path / "details.zip"
+    anomaly = A.replace("250;50", "249;50")
+    make_zip(p, {"BR.csv": H + anomaly + C, "SP.csv": H + anomaly})
+    data = audit_detail_archive(p, 2022)
+    assert data["quarantined_nonconserving_rows"] == 2
+    assert data["unique_exception_sections"] == 1
+    assert data["duplicate_exception_rows"] == 1
+    assert data["exceptional_by_round_uf"][0]["eligible"] == 300
+    assert data["national_by_round"][0]["eligible"] == 200
