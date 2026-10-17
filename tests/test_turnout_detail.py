@@ -1,10 +1,11 @@
-import json
-from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
 
-from electoral_analysis.turnout_detail import audit_detail_archive, comparable_municipal_changes
+from electoral_analysis.turnout_detail import (
+    audit_detail_archive,
+    comparable_municipal_changes,
+)
 
 H = ("ANO_ELEICAO;NR_TURNO;SG_UF;CD_MUNICIPIO;NR_ZONA;NR_SECAO;"
      "DS_CARGO;QT_APTOS;QT_COMPARECIMENTO;QT_ABSTENCOES\n")
