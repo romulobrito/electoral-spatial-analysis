@@ -42,8 +42,10 @@ def test_conflicting_duplicate_fails(tmp_path):
 def test_bad_conservation_fails(tmp_path):
     p = tmp_path / "detail.zip"
     make_zip(p, {"SP.csv": H + A.replace("250;50", "249;50")})
-    with pytest.raises(ValueError, match="aptos"):
-        audit_detail_archive(p, 2022)
+    result = audit_detail_archive(p, 2022)
+    assert result["quarantined_nonconserving_rows"] == 1
+    assert result["counts_are_partial_if_quarantined"]
+    assert result["nonconserving_samples"][0]["difference"] == 1
 
 
 def test_pairing_and_unmatched():
