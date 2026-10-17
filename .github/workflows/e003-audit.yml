@@ -6,6 +6,8 @@ on:
       - '.github/workflows/e003-audit.yml'
       - 'src/electoral_analysis/turnout_detail.py'
       - 'tests/test_turnout_detail.py'
+      - 'src/electoral_analysis/reconcile.py'
+      - 'tests/test_reconcile.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -30,6 +32,9 @@ jobs:
         run: |
           python -m electoral_analysis.turnout_detail data/2022/turnout_2022.zip --year 2022 --output outputs/e003/turnout_2022.json
           python -m electoral_analysis.turnout_detail data/2026/turnout_2026.zip --year 2026 --output outputs/e003/turnout_2026.json
+      - name: Reconcile official 2022 and 2026 electorates
+        run: |
+          python -m electoral_analysis.reconcile outputs/e003/turnout_2022.json outputs/e003/turnout_2026.json --out outputs/e003/reconciliation.json
       - name: Derive provisional paired municipality indicators
         run: |
           python - <<'PY'
