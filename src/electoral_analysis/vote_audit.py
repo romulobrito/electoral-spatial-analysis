@@ -129,9 +129,12 @@ def add_reference_audit(result: dict) -> dict:
         result["reference"] = {"kind": "2022 final TSE publication", "comparisons": checks}
     elif result["year"] == 2026:
         result["reference"] = {
-            "kind": "2026-10-05 TSE partial snapshot, 99.99% counted (not final)",
-            "valid": 125272513, "blank": 2300781, "null": 3674149,
-            "notice": "Differences from partial reference are NOT validation failures",
+            "kind": "TSE 2026-10-05 publication (99.99% sections; interim)",
+            "published_as_valid": 125272513,
+            "published_blank": 2300781,
+            "published_null": 3674149,
+            "comparable": False,
+            "notice": "The published 125272513 'valid' quantity closely resembles total counted votes, not candidate-valid votes in this ZIP. Treat reference as semantically inconsistent pending clarification; never use as valid-vote reconciliation.",
             "source": "https://www.tse.jus.br/comunicacao/noticias/2026/Outubro/flavio-bolsonaro-e-lula-vao-disputar-o-2o-turno-para-a-presidencia-da-republica",
         }
     return result
