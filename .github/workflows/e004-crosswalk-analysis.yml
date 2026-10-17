@@ -1,0 +1,47 @@
+name: E004 official municipality crosswalk validation
+on:
+  push:
+    branches: [feat/e004-territorial-integrity]
+    paths:
+      - '.github/workflows/e004-crosswalk-analysis.yml'
+      - 'src/electoral_analysis/municipal_crosswalk.py'
+      - 'tests/test_municipal_crosswalk.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev]'
+      - run: |
+          python -m pytest -q
+          python -m ruff check src tests
+      - name: Download and process complete official TSE archives
+        run: |
+          python -m electoral_analysis.cli download turnout_2022 --output-dir data/2022
+          python -m electoral_analysis.cli download turnout_2026 --output-dir data/2026
+          python -m electoral_analysis.turnout_detail data/2022/turnout_2022.zip --year 2022 --output outputs/e004/turnout_2022.json
+          python -m electoral_analysis.turnout_detail data/2026/turnout_2026.zip --year 2026 --output outputs/e004/turnout_2026.json
+      - name: Acquire official crosswalk with checksum
+        run: |
+          mkdir -p data/crosswalk
+          curl --fail --location --retry 2 --silent --show-error --max-time 120 \
+            https://cdn.tse.jus.br/estatistica/sead/odsele/municipio_tse_ibge/municipio_tse_ibge.zip \
+            --output data/crosswalk/municipio_tse_ibge.zip
+          sha256sum data/crosswalk/municipio_tse_ibge.zip > outputs/e004/crosswalk.sha256
+      - name: Pair municipalities using exact TSE-IBGE crosswalk
+        run: |
+          python -m electoral_analysis.municipal_crosswalk data/crosswalk/municipio_tse_ibge.zip outputs/e004/turnout_2022.json outputs/e004/turnout_2026.json --out outputs/e004/ibge_municipal_comparison.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e004-crosswalk-audit
+          path: outputs/e004/
+          retention-days: 14
+          if-no-files-found: warn
