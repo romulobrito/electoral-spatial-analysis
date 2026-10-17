@@ -8,7 +8,7 @@ import argparse
 import csv
 import io
 import json
-from collections import Counter, defaultdict
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from zipfile import ZipFile
@@ -34,7 +34,6 @@ def audit_detail_archive(path: Path, year: int) -> dict:
     seen: dict[tuple, tuple[int, int, int]] = {}
     duplicates = 0
     by_source = []
-    rejected = Counter()
     with ZipFile(path) as z:
         for name in sorted(members):
             nrows = 0
