@@ -1,4 +1,3 @@
-import json
 from zipfile import ZipFile
 
 import pytest
