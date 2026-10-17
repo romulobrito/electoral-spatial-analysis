@@ -36,6 +36,8 @@ def audit_detail_archive(path: Path, year: int) -> dict:
     by_source = []
     nonconserving = 0
     discrepancy_samples = []
+    exceptional: dict[tuple, tuple[int, int, int]] = {}
+    exceptional_duplicates = 0
     with ZipFile(path) as z:
         for name in sorted(members):
             nrows = 0
@@ -65,8 +67,17 @@ def audit_detail_archive(path: Path, year: int) -> dict:
                     if (yr != year or turn not in (1, 2) or
                             not all(identity) or min(counts) < 0):
                         raise ValueError(f"{name}:{idx} invalid year/turn/identity/count")
+                    key = (turn, *identity)
                     if counts[0] != counts[1] + counts[2]:
                         nonconserving += 1
+                        if key in seen:
+                            raise ValueError(f"{name}:{idx} conflicting valid and exceptional {key}")
+                        if key in exceptional:
+                            if exceptional[key] != counts:
+                                raise ValueError(f"{name}:{idx} inconsistent exceptional {key}")
+                            exceptional_duplicates += 1
+                        else:
+                            exceptional[key] = counts
                         if len(discrepancy_samples) < 50:
                             discrepancy_samples.append({"member": name, "line": idx,
                                                         "key": [turn, *identity],
@@ -74,7 +85,8 @@ def audit_detail_archive(path: Path, year: int) -> dict:
                                                         "abstained": counts[2],
                                                         "difference": counts[0] - counts[1] - counts[2]})
                         continue
-                    key = (turn, *identity)
+                    if key in exceptional:
+                        raise ValueError(f"{name}:{idx} conflicting exceptional and valid {key}")
                     previous = seen.get(key)
                     if previous is not None:
                         if previous != counts:
@@ -92,6 +104,12 @@ def audit_detail_archive(path: Path, year: int) -> dict:
             target[0] += 1
             for i, value in enumerate(counts, 1):
                 target[i] += value
+    exception_summary = defaultdict(lambda: [0, 0, 0, 0])
+    for (turn, uf, _mun, _zone, _section), counts in exceptional.items():
+        target = exception_summary[(turn, uf)]
+        target[0] += 1
+        for i, value in enumerate(counts, 1):
+            target[i] += value
     return {
         "year": year,
         "zip_sha256": sha256_file(path),
@@ -100,6 +118,13 @@ def audit_detail_archive(path: Path, year: int) -> dict:
         "unique_presidential_sections": len(seen),
         "identical_duplicate_rows": duplicates,
         "quarantined_nonconserving_rows": nonconserving,
+        "unique_exception_sections": len(exceptional),
+        "duplicate_exception_rows": exceptional_duplicates,
+        "exceptional_by_round_uf": [
+            {"round": turn, "uf": uf, "sections": v[0],
+             "eligible": v[1], "attended": v[2], "abstained": v[3]}
+            for (turn, uf), v in sorted(exception_summary.items())
+        ],
         "nonconserving_samples": discrepancy_samples,
         "counts_are_partial_if_quarantined": bool(nonconserving),
         "file_inventory": by_source,
