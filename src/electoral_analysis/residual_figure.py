@@ -1,4 +1,4 @@
-"""Render neutral aggregate model-error diagnostics into versioned SVG/Markdown."""
+# ruff: noqa: ISC004  # Long report/figure text literals are wrapped for legibility.\n"""Render neutral aggregate model-error diagnostics into versioned SVG/Markdown."""
 from __future__ import annotations
 
 import argparse
