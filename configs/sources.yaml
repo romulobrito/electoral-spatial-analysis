@@ -1,0 +1,7 @@
+# Discovery URLs only: resource identifiers, SHA256 and exact download URLs
+# must be verified and recorded before running any ingestion.
+sources:
+  tse_2022: "https://dadosabertos.tse.jus.br/dataset/resultados-2022"
+  tse_2026: "https://dadosabertos.tse.jus.br/dataset/resultados-2026"
+  tse_electorate_2026: "https://dadosabertos.tse.jus.br/dataset/eleitorado-2026"
+  ibge: "https://www.ibge.gov.br/"

@@ -1,7 +1,17 @@
 # Electoral Spatial Analysis
 
-Reproducible research on **aggregate** Brazilian electoral data, historical geographic variation, turnout, and statistical uncertainty.
+Reproducible scientific study of **aggregate** Brazilian electoral geography, historical changes and participation using official sources (TSE and IBGE).
 
-This repository is a scientific and civic-information project. It does not infer individual voting preferences, build political persuasion segments, or optimize targeted electoral messaging.
+**Status:** research infrastructure initialized; no electoral records have yet been downloaded or modeled. No empirical accuracy claims are made.
 
-Research artifacts, datasets, model evaluations, and limitations are documented and versioned through reviewed pull requests. Results are not claimed until data and code have been executed and audited.
+## Local setup
+
+```bash
+python -m pip install -e '.[dev]'
+python -m pytest -q
+python -m ruff check src tests
+```
+
+See `docs/protocol.md` for the scientific protocol, assumptions, safeguards and roadmap. Data ingestion starts with official resource inventory and checksum validation; `src/electoral_analysis/etl.py` currently supplies foundational utilities rather than a full download pipeline.
+
+The project does not infer individual political preferences, target electoral persuasion audiences or optimize messaging for political conversion.
