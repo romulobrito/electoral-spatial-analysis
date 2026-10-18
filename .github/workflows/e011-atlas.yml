@@ -97,6 +97,12 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/atlas/
+          git add -f docs/atlas/data/
+          staged_data=$(git diff --cached --name-only | grep -c '^docs/atlas/data/' || true)
+          if [ "$staged_data" -lt 29 ]; then
+            echo "Error: incomplete versioned atlas data: $staged_data data files staged"
+            exit 1
+          fi
           if ! git diff --cached --quiet; then
             git commit -m 'data(atlas): publish verified geographic and historic election views'
             git push origin HEAD:feat/e011-public-electoral-atlas
