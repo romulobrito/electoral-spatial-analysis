@@ -230,7 +230,9 @@ def main() -> int:
         raise ValueError("E005 official election panel SHA256 mismatch")
     if hashlib.sha256(census_bytes).hexdigest() != IBGE_SHA:
         raise ValueError("E006 IBGE census SHA256 mismatch")
-    # E005's SHA256-pinned panel ALREADY contains verified IBGE IDs from E004.\n    # A newer live mapping ZIP must not silently replace E004's pinned version.\n    census = validate_ibge_response(json.loads(census_bytes))
+    # The pinned E005 panel already contains verified IBGE municipality codes.
+    # Never silently replace these IDs with a changed live TSE crosswalk.
+    census = validate_ibge_response(json.loads(census_bytes))
     rows, quality = join_turnout(
         json.loads(panel_bytes), census, exceptional_ibge="1302603"
     )
