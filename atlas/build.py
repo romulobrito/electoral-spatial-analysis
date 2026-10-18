@@ -8,7 +8,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import math
 import shutil
 from collections import Counter
 from pathlib import Path
