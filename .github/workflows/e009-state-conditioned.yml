@@ -43,23 +43,18 @@ jobs:
           path: .
           run-id: 39072126444
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Obtain pinned official boundaries and municipal code crosswalk
+      - name: Obtain pinned official municipal boundaries
         run: |
           mkdir -p data/e009
           curl --fail --location --retry 3 --connect-timeout 20 --max-time 720 --silent --show-error \
             'https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2022/Brasil/BR/BR_Municipios_2022.zip' \
             --output data/e009/municipios_2022.zip
           echo '9c904fa1feb978a89042bfecd7758e571266f285d6122a4ff02ffe37bffb76a2  data/e009/municipios_2022.zip' | sha256sum --check
-          curl --fail --location --retry 3 --silent --show-error --max-time 120 \
-            'https://cdn.tse.jus.br/estatistica/sead/odsele/municipio_tse_ibge/municipio_tse_ibge.zip' \
-            --output data/e009/municipio_tse_ibge.zip
-          echo '68328ddc166806594a2aab5809ac9aa602153535d6b8a71e886c337f9f3631ca  data/e009/municipio_tse_ibge.zip' | sha256sum --check
       - name: Evaluate conditional Moran on the two geographic graphs
         run: |
           python -m electoral_analysis.state_conditional_moran \
             --panel outputs/e005-results/municipal_results.json \
             --census data/reference/ibge_4714_2022.json \
-            --crosswalk data/e009/municipio_tse_ibge.zip \
             --geometry data/e009/municipios_2022.zip \
             --out-dir outputs/e009
       - name: Generate conditional Moran vector graphic
