@@ -17,7 +17,10 @@ from pathlib import Path
 from .ibge_turnout import _fit_ridge, join_turnout, validate_ibge_response
 from .residual_diagnostics import IBGE_SHA, PANEL_SHA, REGIONAL_SHRINKAGE, STATE_REGION
 from .spatial_moran import build_adjacency
-from .state_conditional_moran import conditional_permutations, prepare_within_state_graph
+from .state_conditional_moran import (
+    conditional_permutations,
+    prepare_within_state_graph,
+)
 
 FEATURE_KEYS = ("turnout_2022", "log_population", "log_density", "neighbor_turnout_2022")
 EXPECTED_NONSPATIAL_MAE = 1.9567342399383514
