@@ -156,7 +156,7 @@ def conditional_permutations(
 
 def study(residuals: dict, adjacency: dict, *, permutations: int = 499) -> dict:
     """Six exploratory statistics: three historical turnout error vectors × two graphs."""
-    if set(adjacency["queen"]) < {"edges"} or set(adjacency["rook"]) < {"edges"}:
+    if "edges" not in adjacency["queen"] or "edges" not in adjacency["rook"]:
         raise ValueError("Missing queen/rook contiguity")
     results = {}
     graphs = {}
