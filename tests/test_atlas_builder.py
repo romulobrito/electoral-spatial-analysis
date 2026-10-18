@@ -1,6 +1,8 @@
 """Checks for neutral, internally consistent static atlas preparation."""
 import pytest
+
 from atlas.build import _validate_year, normalize_panel
+
 
 def year_row():
     return {"valid":7,"blank":1,"null":0,"attended":8,
