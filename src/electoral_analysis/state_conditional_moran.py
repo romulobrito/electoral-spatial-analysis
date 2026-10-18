@@ -15,10 +15,8 @@ from collections import defaultdict
 from pathlib import Path
 
 from .ibge_turnout import join_turnout, validate_ibge_response
-from .municipal_crosswalk import read_crosswalk_zip
 from .residual_diagnostics import IBGE_SHA, PANEL_SHA
 from .spatial_moran import (
-    CROSSWALK_SHA,
     build_adjacency,
     out_of_state_residuals,
 )
@@ -221,7 +219,6 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--panel", type=Path, required=True)
     p.add_argument("--census", type=Path, required=True)
-    p.add_argument("--crosswalk", type=Path, required=True)
     p.add_argument("--geometry", type=Path, required=True)
     p.add_argument("--out-dir", type=Path, required=True)
     args = p.parse_args()
@@ -233,12 +230,7 @@ def main() -> int:
         raise ValueError("E005 official election panel SHA256 mismatch")
     if hashlib.sha256(census_bytes).hexdigest() != IBGE_SHA:
         raise ValueError("E006 IBGE census SHA256 mismatch")
-    if hashlib.sha256(args.crosswalk.read_bytes()).hexdigest() != CROSSWALK_SHA:
-        raise ValueError("TSE municipality mapping SHA256 mismatch")
-    crosswalk = read_crosswalk_zip(args.crosswalk)
-    if crosswalk["inconsistencies"] or crosswalk["map"].get(("AM", "2550")) != "1302603":
-        raise ValueError("Municipality mapping or exceptional denominator unresolved")
-    census = validate_ibge_response(json.loads(census_bytes))
+    # E005's SHA256-pinned panel ALREADY contains verified IBGE IDs from E004.\n    # A newer live mapping ZIP must not silently replace E004's pinned version.\n    census = validate_ibge_response(json.loads(census_bytes))
     rows, quality = join_turnout(
         json.loads(panel_bytes), census, exceptional_ibge="1302603"
     )
