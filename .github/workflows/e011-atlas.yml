@@ -59,6 +59,7 @@ jobs:
           echo '9c904fa1feb978a89042bfecd7758e571266f285d6122a4ff02ffe37bffb76a2  data/atlas/municipios_2022.zip' | sha256sum --check
       - name: Build static atlas
         run: |
+          rm -rf docs/atlas
           python -m atlas.build \
             --panel outputs/e005-results/municipal_results.json \
             --geometry data/atlas/municipios_2022.zip \
@@ -98,9 +99,9 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/atlas/
           git add -f docs/atlas/data/
-          staged_data=$(git diff --cached --name-only | grep -c '^docs/atlas/data/' || true)
-          if [ "$staged_data" -lt 29 ]; then
-            echo "Error: incomplete versioned atlas data: $staged_data data files staged"
+          tracked_data=$(git ls-files docs/atlas/data/ | wc -l)
+          if [ "$tracked_data" -lt 30 ]; then
+            echo "Error: incomplete versioned atlas: only $tracked_data data files tracked"
             exit 1
           fi
           if ! git diff --cached --quiet; then
