@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 975 425" role="img" aria-label="Comparação dos erros absolutos médios no E010">
+<rect width="975" height="425" fill="white"/>
+<text x="25" y="36" font-family="Arial" font-size="21" font-weight="bold">E010: Erro médio do comparecimento (MAE)</text>
+<text x="25" y="59" font-family="Arial" font-size="13" fill="#475569">5.569 municípios · 27 UFs em rodízio de teste · valores menores são melhores</text>
+<text x="25" y="110" font-family="Arial" font-size="14">Persistência</text>
+<rect x="230" y="91" width="461.27" height="25" rx="3" fill="#64748b"/>
+<text x="701.3" y="109" font-family="Arial" font-size="13" font-weight="normal">2.1355 pp</text>
+<text x="25" y="167" font-family="Arial" font-size="14">Ridge E006</text>
+<rect x="230" y="148" width="422.65" height="25" rx="3" fill="#64748b"/>
+<text x="662.7" y="166" font-family="Arial" font-size="13" font-weight="normal">1.9567 pp</text>
+<text x="25" y="224" font-family="Arial" font-size="14">Ridge + região E007</text>
+<rect x="230" y="205" width="386.96" height="25" rx="3" fill="#0d9488"/>
+<text x="627.0" y="223" font-family="Arial" font-size="13" font-weight="bold">1.7915 pp</text>
+<text x="25" y="281" font-family="Arial" font-size="14">Ridge espacial queen</text>
+<rect x="230" y="262" width="420.22" height="25" rx="3" fill="#94a3b8"/>
+<text x="660.2" y="280" font-family="Arial" font-size="13" font-weight="normal">1.9455 pp</text>
+<text x="25" y="338" font-family="Arial" font-size="14">Ridge espacial rook</text>
+<rect x="230" y="319" width="420.18" height="25" rx="3" fill="#94a3b8"/>
+<text x="660.2" y="337" font-family="Arial" font-size="13" font-weight="normal">1.9453 pp</text>
+<text x="25" y="401" font-family="Arial" font-size="11" fill="#475569">Fontes: TSE 2022/2026; IBGE 2022. Modelos retrospectivos de comparecimento, sem resultados por candidatura.</text>
+</svg>

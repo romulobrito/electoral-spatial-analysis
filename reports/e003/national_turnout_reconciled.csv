@@ -1,0 +1,4 @@
+year,round,official_effective_eligible,attended,implied_abstentions,reconciled_turnout_pct,unique_exception_sections,exceptional_eligible,transfer_adjustment,reconciled
+2022,1,156454011,123682372,32771639,79.053500264688,47,657,0,true
+2022,2,156454011,124252796,32201215,79.418095583372,47,657,0,true
+2026,1,158745463,125275835,33469628,78.916167197799,41,423,39,true

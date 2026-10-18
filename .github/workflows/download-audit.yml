@@ -1,0 +1,86 @@
+name: Verify official TSE ZIP downloads
+
+on:
+  push:
+    branches: [chore/retry-tse-download]
+    paths:
+      - ".github/workflows/download-audit.yml"
+      - "src/electoral_analysis/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  download-probe:
+    name: Download ${{ matrix.resource }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        resource: [president_2022, president_2026]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install research package
+        run: python -m pip install -e .
+      - name: Probe origin and download official archive
+        id: attempt
+        shell: bash
+        run: |
+          mkdir -p "data/bronze/${{ matrix.resource }}" "outputs/download-probe/${{ matrix.resource }}"
+          python - <<'PY' > "outputs/download-probe/${{ matrix.resource }}/source.txt"
+          from electoral_analysis.sources import RESOURCES
+          print(RESOURCES["${{ matrix.resource }}"].url)
+          PY
+          url="$(cat "outputs/download-probe/${{ matrix.resource }}/source.txt")"
+          curl -ILsS --max-time 35 -w '\nHTTP_CODE=%{http_code} FINAL_URL=%{url_effective} DOWNLOADED=%{size_download}\n' "$url" > "outputs/download-probe/${{ matrix.resource }}/head.txt" 2>&1 || true
+          set +e
+          python -m electoral_analysis.cli download "${{ matrix.resource }}" \
+            --output-dir "data/bronze/${{ matrix.resource }}" \
+            > "outputs/download-probe/${{ matrix.resource }}/download.log" 2>&1
+          code=$?
+          set -e
+          printf "%s\n" "$code" > "outputs/download-probe/${{ matrix.resource }}/exit_code.txt"
+          cat "outputs/download-probe/${{ matrix.resource }}/head.txt"
+          cat "outputs/download-probe/${{ matrix.resource }}/download.log"
+          if [[ "$code" -ne 0 ]]; then exit "$code"; fi
+      - name: Inspect archive's CSV header without extracting
+        if: success()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from zipfile import ZipFile
+          key = "${{ matrix.resource }}"
+          folder = Path("data/bronze") / key
+          zpath = folder / f"{key}.zip"
+          manifest = json.loads((folder / f"{key}.manifest.json").read_text(encoding="utf-8"))
+          headers = []
+          with ZipFile(zpath) as archive:
+              for member in archive.infolist():
+                  if member.filename.lower().endswith(".csv") and not member.is_dir():
+                      with archive.open(member) as stream:
+                          snippet = stream.readline(16384).decode("latin-1").strip()[:5000]
+                      headers.append({"member": member.filename, "header": snippet})
+          report = {"source": manifest, "sample_headers": headers,
+                    "caveat": "Header inspection only; official reconciliation not run"}
+          out = Path("outputs/download-probe") / key / "inventory.json"
+          out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+          print("Downloaded ZIP:", zpath, "bytes:", zpath.stat().st_size,
+                "SHA256:", manifest["sha256"], "CSV files:", len(headers))
+          PY
+      - name: Upload small provenance and diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tse-probe-${{ matrix.resource }}
+          path: outputs/download-probe/${{ matrix.resource }}/
+          retention-days: 14
+          if-no-files-found: warn

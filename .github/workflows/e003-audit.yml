@@ -1,0 +1,59 @@
+name: E003 full turnout and municipality comparability audit
+on:
+  push:
+    branches: [feat/e003-turnout-geography]
+    paths:
+      - '.github/workflows/e003-audit.yml'
+      - 'src/electoral_analysis/turnout_detail.py'
+      - 'tests/test_turnout_detail.py'
+      - 'src/electoral_analysis/reconcile.py'
+      - 'tests/test_reconcile.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev]'
+      - run: |
+          python -m pytest -q
+          python -m ruff check src tests
+      - name: Download official turnout detail 2022 and 2026
+        run: |
+          python -m electoral_analysis.cli download turnout_2022 --output-dir data/2022
+          python -m electoral_analysis.cli download turnout_2026 --output-dir data/2026
+      - name: Stream and audit all official CSV members
+        run: |
+          python -m electoral_analysis.turnout_detail data/2022/turnout_2022.zip --year 2022 --output outputs/e003/turnout_2022.json
+          python -m electoral_analysis.turnout_detail data/2026/turnout_2026.zip --year 2026 --output outputs/e003/turnout_2026.json
+      - name: Reconcile official 2022 and 2026 electorates
+        run: |
+          python -m electoral_analysis.reconcile outputs/e003/turnout_2022.json outputs/e003/turnout_2026.json --out outputs/e003/reconciliation.json
+      - name: Derive provisional paired municipality indicators
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from electoral_analysis.turnout_detail import comparable_municipal_changes
+          a = json.loads(Path("outputs/e003/turnout_2022.json").read_text())
+          b = json.loads(Path("outputs/e003/turnout_2026.json").read_text())
+          x = comparable_municipal_changes(a, b)
+          Path("outputs/e003/municipal_comparison.json").write_text(json.dumps(x,indent=2))
+          print({k:v for k,v in x.items() if k != "rows"})
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e003-municipal-audit
+          path: |
+            outputs/e003/
+            data/2022/*.manifest.json
+            data/2026/*.manifest.json
+          retention-days: 14
+          if-no-files-found: warn

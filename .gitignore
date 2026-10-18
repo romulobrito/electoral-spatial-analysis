@@ -9,3 +9,7 @@ outputs/
 *.csv
 *.zip
 .env
+
+# Explicitly publish the small audited aggregate atlas (never source ZIPs).
+!/docs/atlas/data/
+!/docs/atlas/data/**

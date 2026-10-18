@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#102638">
+  <meta name="description" content="Atlas independente de estatísticas eleitorais municipais observadas. Fontes oficiais TSE e IBGE.">
+  <title>Atlas Eleitoral Municipal | Dados observados TSE–IBGE</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#conteudo">Ir para o conteúdo</a>
+  <header class="site-header">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">◈</span><div><strong>Atlas Eleitoral Municipal</strong><small>Estatísticas públicas · Primeiro turno · Brasil</small></div></div>
+    <a class="header-link" href="https://github.com/romulobrito/electoral-spatial-analysis" target="_blank" rel="noopener noreferrer">Código e metodologia ↗</a>
+  </header>
+  <main id="conteudo">
+    <section class="intro">
+      <div class="eyebrow">PESQUISA REPRODUZÍVEL · E011</div>
+      <h1>Explore os resultados eleitorais <em>observados</em>, município a município.</h1>
+      <p>Um atlas descritivo dos resultados presidenciais de 2022 e 2026, com mapas oficiais do IBGE, comparecimento e informações de proveniência. Não realiza previsões de votos, perfis individuais ou classificação de locais para campanhas.</p>
+    </section>
+    <div id="status" class="status" role="status" aria-live="polite">Carregando indicadores oficiais…</div>
+    <section class="dashboard" aria-label="Explorador municipal">
+      <div class="filters" role="group" aria-label="Filtros do atlas">
+        <div class="control"><label for="uf">Estado / DF</label><select id="uf"><option value="">Carregando estados…</option></select></div>
+        <div class="control"><label for="year">Eleição</label><select id="year"><option>2022</option><option>2026</option></select></div>
+        <div class="control"><label for="metric">Indicador</label>
+          <select id="metric">
+            <option value="turnout">Comparecimento (% aptos)</option>
+            <option value="candidate">Votos de candidatura (% válidos)</option>
+            <option value="blank">Votos brancos (% votantes)</option>
+            <option value="null">Votos nulos (% votantes)</option>
+            <option value="delta_turnout">Variação no comparecimento (pp)</option>
+          </select>
+        </div>
+        <div class="control" id="candidate-wrap" hidden><label for="candidate">Candidatura registrada</label><select id="candidate"></select></div>
+        <div class="control search"><label for="city">Localizar município (não filtra o mapa)</label><input id="city" type="search" placeholder="Digite o nome do município…" autocomplete="off" aria-describedby="search-help"><span id="search-help" class="micro">Pesquisa por nome, sem classificação de localidades.</span></div>
+      </div>
+      <div class="stats" aria-label="Indicadores agregados para o estado selecionado">
+        <article class="stat"><div class="stat-label">Municípios representados</div><div class="stat-value" id="n-mun">—</div><div class="stat-note">Na UF escolhida</div></article>
+        <article class="stat"><div class="stat-label">Votos válidos</div><div class="stat-value" id="n-valid">—</div><div class="stat-note">Primeiro turno, UF selecionada</div></article>
+        <article class="stat"><div class="stat-label">Comparecimento agregado</div><div class="stat-value" id="n-turnout">—</div><div class="stat-note">Dados de seções conservativas</div></article>
+        <article class="stat"><div class="stat-label" id="focus-title">Indicador no estado</div><div class="stat-value" id="n-focus">—</div><div class="stat-note" id="focus-desc">Ponderado por votos ou eleitores</div></article>
+      </div>
+      <div class="panel-grid">
+        <section class="map-panel" aria-labelledby="map-title">
+          <div class="panel-top"><div><h2 id="map-title">Mapa municipal</h2><p id="map-subtitle">Clique em um município para consultar os números registrados.</p></div><button type="button" id="reset" class="muted-button">Limpar seleção</button></div>
+          <div class="map-frame">
+            <svg id="map" viewBox="0 0 940 630" role="img" aria-label="Mapa municipal da unidade federativa selecionada" tabindex="0"></svg>
+            <div class="map-info" id="map-loading">Preparando geometrias municipais…</div>
+          </div>
+          <div class="legend" id="legend" aria-label="Legenda do mapa"></div>
+          <p class="map-footnote">Limites municipais da Malha IBGE 2022, simplificados exclusivamente para apresentação. A posição da seção eleitoral não determina o bairro de residência do eleitor.</p>
+        </section>
+        <aside class="detail-panel" aria-labelledby="detail-title">
+          <div class="panel-top"><div><h2 id="detail-title">Detalhamento municipal</h2><p>Dados observados, sem projeção ou perfil individual.</p></div></div>
+          <div id="detail" class="detail-content"><div class="empty-state"><span aria-hidden="true">⌖</span><p>Selecione um município no mapa para examinar seus resultados.</p></div></div>
+        </aside>
+      </div>
+    </section>
+    <section class="method" aria-labelledby="method-title">
+      <div class="section-heading"><div class="eyebrow">FONTES E QUALIDADE</div><h2 id="method-title">Como interpretar estes dados</h2></div>
+      <div class="method-grid">
+        <article><span class="number">01</span><h3>Resultados, não previsões</h3><p>Os percentuais de candidatura usam exclusivamente votos válidos registrados no primeiro turno da eleição selecionada. As opções de candidatura são específicas de cada ano.</p></article>
+        <article><span class="number">02</span><h3>Compatibilidade geográfica</h3><p>Municípios são identificados pelo código IBGE de sete dígitos, reconciliado com o TSE. O mapa de 2022 serve como referência territorial de exibição para os dois anos.</p></article>
+        <article><span class="number">03</span><h3>Exceções transparentes</h3><p>Um município do Amazonas possui uma exceção de 84 eleitores aptos no denominador de 2022; a interface sinaliza essa limitação. Não inferimos intenção de voto de indivíduos.</p></article>
+      </div>
+      <p class="source-line"><strong>Fontes:</strong> <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener noreferrer">Portal de Dados Abertos do TSE ↗</a> · <a href="https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais.html" target="_blank" rel="noopener noreferrer">Malhas Territoriais IBGE ↗</a> · <a href="https://github.com/romulobrito/electoral-spatial-analysis/tree/feat/e011-public-electoral-atlas" target="_blank" rel="noopener noreferrer">Protocolo e código-fonte ↗</a></p>
+      <details class="provenance"><summary>Proveniência e verificação dos arquivos</summary><pre id="provenance">Carregando manifesto…</pre></details>
+    </section>
+  </main>
+  <footer><span>Atlas Eleitoral Municipal · Projeto acadêmico independente</span><span>Dados agregados TSE–IBGE · Sem segmentação individual</span></footer>
+</body>
+</html>

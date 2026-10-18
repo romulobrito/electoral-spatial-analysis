@@ -1,0 +1,65 @@
+name: E005 neutral municipal election results and turnout baseline
+on:
+  push:
+    branches: [feat/e005-neutral-municipal-results]
+    paths:
+      - '.github/workflows/e005-municipal-results.yml'
+      - 'src/electoral_analysis/municipal_results.py'
+      - 'tests/test_municipal_results.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev]'
+      - name: Unit tests and lint
+        run: |
+          python -m pytest -q
+          python -m ruff check src tests
+      - name: Download four official voting and turnout archives
+        run: |
+          python -m electoral_analysis.cli download president_2022 --output-dir data/2022
+          python -m electoral_analysis.cli download president_2026 --output-dir data/2026
+          python -m electoral_analysis.cli download turnout_2022 --output-dir data/2022
+          python -m electoral_analysis.cli download turnout_2026 --output-dir data/2026
+      - name: Freeze previously audited official vote snapshots
+        run: |
+          echo '9353993de5cf03778aef44e01d4925e7ee105f5262491d344a2f0dbc956b0139  data/2022/president_2022.zip' | sha256sum --check
+          echo '2d42006d0f6c6e00bad83f5c23cd3d78cd3e3182dbc1ad6718222b6b132c23e1  data/2026/president_2026.zip' | sha256sum --check
+      - name: Audit independent section-level turnout data
+        run: |
+          python -m electoral_analysis.turnout_detail data/2022/turnout_2022.zip --year 2022 --output outputs/e005-details/turnout_2022.json
+          python -m electoral_analysis.turnout_detail data/2026/turnout_2026.zip --year 2026 --output outputs/e005-details/turnout_2026.json
+      - name: Download and freeze official TSE-IBGE crosswalk
+        run: |
+          mkdir -p data/crosswalk
+          curl --fail --location --retry 2 --silent --show-error --max-time 120 \
+            https://cdn.tse.jus.br/estatistica/sead/odsele/municipio_tse_ibge/municipio_tse_ibge.zip \
+            --output data/crosswalk/municipio_tse_ibge.zip
+          echo '68328ddc166806594a2aab5809ac9aa602153535d6b8a71e886c337f9f3631ca  data/crosswalk/municipio_tse_ibge.zip' | sha256sum --check
+      - name: Create audited municipal description and participation baseline
+        run: |
+          python -m electoral_analysis.municipal_results \
+            --votes-2022 data/2022/president_2022.zip \
+            --votes-2026 data/2026/president_2026.zip \
+            --detail-2022 outputs/e005-details/turnout_2022.json \
+            --detail-2026 outputs/e005-details/turnout_2026.json \
+            --crosswalk data/crosswalk/municipio_tse_ibge.zip \
+            --output-dir outputs/e005-results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e005-neutral-aggregated-results
+          path: |
+            outputs/e005-results/
+            data/2022/*.manifest.json
+            data/2026/*.manifest.json
+          retention-days: 14
+          if-no-files-found: warn

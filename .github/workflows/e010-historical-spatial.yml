@@ -1,0 +1,65 @@
+name: E010 historical spatial lag for aggregate turnout
+on:
+  push:
+    branches: [feat/e010-historical-spatial-turnout]
+    paths:
+      - '.github/workflows/e010-historical-spatial.yml'
+      - 'src/electoral_analysis/spatial_lag_turnout.py'
+      - 'tests/test_spatial_lag_turnout.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install scientific and GIS tools
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install geopandas pyogrio shapely
+      - name: Validate code and all repository tests
+        run: |
+          python -m pytest -q
+          python -m ruff check src tests
+      - name: Recover immutable E005 electoral municipality panel
+        uses: actions/download-artifact@v4
+        with:
+          name: e005-neutral-aggregated-results
+          path: .
+          run-id: 39069589159
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Recover E006 Census 2022 audited snapshot
+        uses: actions/download-artifact@v4
+        with:
+          name: e006-ibge-turnout-validation
+          path: .
+          run-id: 39072126444
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Retrieve pinned official IBGE 2022 municipal boundaries
+        run: |
+          mkdir -p data/e010
+          curl --fail --location --retry 3 --connect-timeout 20 --max-time 720 --silent --show-error \
+            'https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2022/Brasil/BR/BR_Municipios_2022.zip' \
+            --output data/e010/municipios_2022.zip
+          echo '9c904fa1feb978a89042bfecd7758e571266f285d6122a4ff02ffe37bffb76a2  data/e010/municipios_2022.zip' | sha256sum --check
+      - name: Fit historic-only spatial turnout lag model with UF holdouts
+        run: |
+          python -m electoral_analysis.spatial_lag_turnout \
+            --panel outputs/e005-results/municipal_results.json \
+            --census data/reference/ibge_4714_2022.json \
+            --geometry data/e010/municipios_2022.zip \
+            --output-dir outputs/e010
+      - name: Upload audited models and conditional Moran diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e010-spatial-turnout-validation
+          path: outputs/e010/
+          retention-days: 14
+          if-no-files-found: warn
