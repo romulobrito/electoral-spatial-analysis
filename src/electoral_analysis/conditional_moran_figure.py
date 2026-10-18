@@ -1,4 +1,4 @@
-"""Plot only aggregate model-error Moran I under state-conditioned nulls."""
+# ruff: noqa: ISC004  # Intentional multiline SVG text labels.\n"""Plot only aggregate model-error Moran I under state-conditioned nulls."""
 from __future__ import annotations
 
 import argparse
