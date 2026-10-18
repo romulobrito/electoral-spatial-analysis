@@ -1,0 +1,105 @@
+name: E011 build and version municipal atlas
+on:
+  push:
+    branches: [feat/e011-public-electoral-atlas]
+    paths:
+      - 'atlas/**'
+      - 'tests/test_atlas_builder.py'
+      - '.github/workflows/e011-atlas.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install audit and GIS tools
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install geopandas pyogrio shapely
+      - name: Validate Python, JavaScript, and HTML
+        run: |
+          python -m pytest -q
+          python -m ruff check src atlas tests
+          node --check atlas/web/app.js
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          html=Path("atlas/web/index.html").read_text(encoding="utf-8")
+          assert '<html lang="pt-BR">' in html
+          for key in ("uf","year","metric","candidate","city","map","detail","legend","provenance"):
+              assert 'id="'+key+'"' in html, key
+          HTMLParser().feed(html)
+          print("Atlas markup and JS syntax checked")
+          PY
+      - name: Recover audited E005 municipality panel
+        uses: actions/download-artifact@v4
+        with:
+          name: e005-neutral-aggregated-results
+          path: .
+          run-id: 39069589159
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download official SHA256-verified 2022 IBGE boundaries
+        run: |
+          mkdir -p data/atlas
+          curl --fail --location --retry 3 --connect-timeout 20 --max-time 720 --silent --show-error \
+            'https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2022/Brasil/BR/BR_Municipios_2022.zip' \
+            --output data/atlas/municipios_2022.zip
+          echo '9c904fa1feb978a89042bfecd7758e571266f285d6122a4ff02ffe37bffb76a2  data/atlas/municipios_2022.zip' | sha256sum --check
+      - name: Build static atlas
+        run: |
+          python -m atlas.build \
+            --panel outputs/e005-results/municipal_results.json \
+            --geometry data/atlas/municipios_2022.zip \
+            --template-dir atlas/web \
+            --out docs/atlas
+      - name: Validate 27 state files and all municipality geometries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path("docs/atlas")
+          meta=json.loads((root/"data/metadata.json").read_text())
+          rows=json.loads((root/"data/municipalities.json").read_text())
+          manifest=json.loads((root/"data/manifest.json").read_text())
+          assert len(rows)==meta["municipalities"]==manifest["municipalities"]==5570
+          assert sum(meta["municipalities_by_uf"].values())==5570
+          assert manifest["uf_files"]==27
+          for uf,n in meta["municipalities_by_uf"].items():
+              data=json.loads((root/"data/states"/(uf+".geojson")).read_text())
+              assert data["type"]=="FeatureCollection"
+              assert len(data["features"])==n
+              ids=[f["properties"]["ibge"] for f in data["features"]]
+              assert len(ids)==len(set(ids))
+              assert all(i in rows and rows[i]["uf"]==uf for i in ids)
+          print("Atlas verified for all 5,570 municipalities and 27 UFs")
+          PY
+      - name: Upload ready-to-serve atlas artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: e011-public-electoral-atlas
+          path: docs/atlas/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Commit verified static atlas data to PR branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/atlas/
+          if ! git diff --cached --quiet; then
+            git commit -m 'data(atlas): publish verified geographic and historic election views'
+            git push origin HEAD:feat/e011-public-electoral-atlas
+          else
+            echo 'No new compiled atlas changes'
+          fi
