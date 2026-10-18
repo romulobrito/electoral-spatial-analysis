@@ -6,7 +6,7 @@ E008 found Moran's I around 0.40–0.50 for geographically adjacent municipaliti
 
 ## Inputs and quality gates
 
-Recreate E007 held-out residuals using hashes for E005 TSE first-round aggregate turnout panel and E006 official IBGE Census 2022 data. Assert the exact E007 MAEs. Download original 2022 IBGE municipal boundaries (EPSG:4674, SHA256 pinned) and official TSE-to-IBGE municipality code map (pinned). Preserve a categorical map of each municipality's UF.
+Recreate E007 held-out residuals using hashes for E005 TSE first-round aggregate turnout panel and E006 official IBGE Census 2022 data. Assert the exact E007 MAEs. Download original 2022 IBGE municipal boundaries (EPSG:4674, SHA256 pinned). The 2022/2026 TSE-to-IBGE municipality join is **already frozen inside the E005 panel and its SHA256**; do not download a newer live crosswalk to change validated historical municipality codes. Preserve each municipality's UF and the known Amazonas-denominator exception.
 
 From E008's queen/rook adjacency, keep only edges whose **two endpoints are in the same UF**. All cross-UF edges are counted and excluded. Recalculate isolates after excluding such edges; DF and other disconnected municipalities can be excluded **only from this contiguity statistic**, without dropping them from the original E005/E006 electorally reconciled panel.
 
@@ -33,4 +33,4 @@ This protocol tests spatial organization of **aggregate turnout prediction error
 
 ## Reproduction
 
-GitHub workflow `.github/workflows/e009-state-conditioned.yml` pins the same official data as E008 and publishes versioned conditional Moran JSON/CSV and SVG. Keep compact results in Git; archive source geometry only by SHA256 and official URL.
+GitHub workflow `.github/workflows/e009-state-conditioned.yml` pins the E005 electoral panel, E006 Census snapshot and IBGE 2022 official geometry and publishes versioned conditional Moran JSON/CSV and SVG. On 2026-10-18, the live TSE crosswalk hash had changed relative to E004; its re-download was removed from E009 because the exact old mapping is already verified in E005. A separate explicit source-version migration is required to update that mapping. Keep compact results in Git; archive source geometry only by SHA256 and official URL.
