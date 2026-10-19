@@ -79,6 +79,29 @@ jobs:
             --reports reports \
             --template-dir atlas/web \
             --out docs/atlas
+      - name: Assert every referenced local script is shipped in public site
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Scripts(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.scripts=[]
+              def handle_starttag(self, tag, attrs):
+                  if tag == "script":
+                      src=dict(attrs).get("src")
+                      if src and src.startswith("./"):
+                          self.scripts.append(src[2:])
+          site=Path("docs/atlas")
+          parser=Scripts()
+          parser.feed((site/"index.html").read_text(encoding="utf-8"))
+          assert "research.js" in parser.scripts
+          for src in parser.scripts:
+              path=site/src
+              assert path.is_file() and path.stat().st_size>0, src
+          print("All scripts referenced by public HTML are present:", parser.scripts)
+          PY
       - name: Validate 27 state files and all municipality geometries
         run: |
           python - <<'PY'
