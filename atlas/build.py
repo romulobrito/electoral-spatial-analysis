@@ -12,7 +12,7 @@ import shutil
 from collections import Counter
 from pathlib import Path
 
-from .analytics import matched_candidacies, census_indicators, validation_diagnostics
+from .analytics import census_indicators, matched_candidacies, validation_diagnostics
 
 E005_SHA = "2b84fd89497c10a9d47f6a1a1793da144ac1be845df97605101607e424e1323d"
 IBGE_GEOMETRY_SHA = "9c904fa1feb978a89042bfecd7758e571266f285d6122a4ff02ffe37bffb76a2"
@@ -187,7 +187,7 @@ def create_site(panel: dict, gis: object, template_dir: Path, dest: Path, *, cen
     metadata['matched_candidate_labels'] = matches
     metadata['census'] = census_meta
     metadata['research_panel_version'] = 'E012'
-    for asset in ("index.html", "app.js", "styles.css"):
+    for asset in ("index.html", "app.js", "research.js", "styles.css"):
         if not (template_dir / asset).is_file():
             raise ValueError(f"Missing static site template: {asset}")
     dest.mkdir(parents=True)
