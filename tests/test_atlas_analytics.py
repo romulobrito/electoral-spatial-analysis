@@ -34,5 +34,5 @@ def test_real_versioned_model_csv_contract():
 
 
 def test_fail_if_model_file_missing(tmp_path):
-    with pytest.raises(ValueError, match="Empty|Unexpected|No such file"):
+    with pytest.raises(FileNotFoundError):
         validation_diagnostics(tmp_path)
