@@ -197,15 +197,18 @@ def multivariate_associations(rows: list[dict]) -> dict:
             "observed_2022_mean":float(mean[j-1]),
             "observed_2022_sd":float(std[j-1]),
         })
+    group_totals=defaultdict(list)
+    for row,y in zip(usable,target):
+        group_totals[row["uf"]].append(float(y))
+    state_means={uf:sum(v)/len(v) for uf,v in group_totals.items()}
+    within_total=sum((y-state_means[row["uf"]])**2
+                     for row,y in zip(usable,target))
     return {
         "method":"Retrospective municipal OLS with UF fixed effects and UF-clustered standard errors",
         "observations":len(usable),"clusters_uf":len(states),
         "response":"2026 minus 2022 aggregate turnout (percentage points)",
         "r2_in_sample":float(fitted.rsquared),
-        "r2_within_uf":float(1-sum(fitted.resid**2)/sum(
-            (target[i]-np.mean([target[k] for k,r in enumerate(usable) if r["uf"]==usable[i]["uf"]]))**2
-            for i in range(len(usable))
-        )),
+        "r2_within_uf":float(1-sum(fitted.resid**2)/within_total),
         "features":associations,
         "caveat":"Associations only. UF fixed-effects in-sample R² must not be interpreted as out-of-UF predictive performance; clustered CIs are exploratory with 27 clusters.",
     }
