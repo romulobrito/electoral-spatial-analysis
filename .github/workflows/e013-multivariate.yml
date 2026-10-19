@@ -1,0 +1,64 @@
+name: E013 multivariate turnout validation
+on:
+  push:
+    branches: [feat/e013-multivariate-turnout-validation]
+    paths:
+      - '.github/workflows/e013-multivariate.yml'
+      - 'src/electoral_analysis/multivariate_turnout.py'
+      - 'tests/test_multivariate_turnout.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install modeling and geographic dependencies
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install numpy statsmodels geopandas pyogrio shapely
+      - name: Run all tests and lint
+        run: |
+          python -m pytest -q
+          python -m ruff check src atlas tests
+      - name: Recover verified E005 electoral observations
+        uses: actions/download-artifact@v4
+        with:
+          name: e005-neutral-aggregated-results
+          path: .
+          run-id: 39069589159
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Recover audited Census E006
+        uses: actions/download-artifact@v4
+        with:
+          name: e006-ibge-turnout-validation
+          path: .
+          run-id: 39072126444
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Obtain IBGE 2022 geometry
+        run: |
+          mkdir -p data/e013
+          curl --fail --location --retry 3 --connect-timeout 20 --max-time 720 --silent --show-error \
+            'https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2022/Brasil/BR/BR_Municipios_2022.zip' \
+            --output data/e013/municipios_2022.zip
+          echo '9c904fa1feb978a89042bfecd7758e571266f285d6122a4ff02ffe37bffb76a2  data/e013/municipios_2022.zip' | sha256sum --check
+      - name: Evaluate historical linear and quadratic models and Moran
+        run: |
+          python -m electoral_analysis.multivariate_turnout \
+            --panel outputs/e005-results/municipal_results.json \
+            --census data/reference/ibge_4714_2022.json \
+            --geometry data/e013/municipios_2022.zip \
+            --out-dir outputs/e013
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e013-multivariate-turnout-results
+          path: outputs/e013/
+          retention-days: 14
+          if-no-files-found: warn
