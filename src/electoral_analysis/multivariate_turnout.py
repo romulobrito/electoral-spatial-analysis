@@ -17,11 +17,15 @@ import numpy as np
 
 from .ibge_turnout import _fit_ridge, join_turnout, validate_ibge_response
 from .residual_diagnostics import (
-    IBGE_SHA, PANEL_SHA, REGIONAL_SHRINKAGE, STATE_REGION,
+    IBGE_SHA,
+    PANEL_SHA,
+    REGIONAL_SHRINKAGE,
+    STATE_REGION,
 )
 from .spatial_moran import build_adjacency
 from .state_conditional_moran import (
-    conditional_permutations, prepare_within_state_graph,
+    conditional_permutations,
+    prepare_within_state_graph,
 )
 
 EXPECTED_N = 5569
