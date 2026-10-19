@@ -1,7 +1,7 @@
 name: E012 Census and scientific atlas release
 on:
   push:
-    branches: [feat/e012-atlas-research-panels]
+    branches: [feat/e012-atlas-research-panels, fix/atlas-e012-missing-js-and-candidate-table]
     paths:
       - 'atlas/**'
       - 'tests/test_atlas_builder.py'
@@ -147,7 +147,7 @@ jobs:
           fi
           if ! git diff --cached --quiet; then
             git commit -m 'data(atlas): publish verified geographic and historic election views'
-            git push origin HEAD:feat/e012-atlas-research-panels
+            git push origin HEAD:fix/atlas-e012-missing-js-and-candidate-table
           else
             echo 'No new compiled atlas changes'
           fi
