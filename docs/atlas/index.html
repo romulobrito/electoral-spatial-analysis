@@ -8,6 +8,7 @@
   <title>Atlas Eleitoral Municipal | Dados observados TSE–IBGE</title>
   <link rel="stylesheet" href="./styles.css">
   <script defer src="./app.js"></script>
+  <script defer src="./research.js"></script>
 </head>
 <body>
   <a class="skip" href="#conteudo">Ir para o conteúdo</a>
@@ -17,7 +18,7 @@
   </header>
   <main id="conteudo">
     <section class="intro">
-      <div class="eyebrow">PESQUISA REPRODUZÍVEL · E011</div>
+      <div class="eyebrow">PESQUISA REPRODUZÍVEL · E012</div>
       <h1>Explore os resultados eleitorais <em>observados</em>, município a município.</h1>
       <p>Um atlas descritivo dos resultados presidenciais de 2022 e 2026, com mapas oficiais do IBGE, comparecimento e informações de proveniência. Não realiza previsões de votos, perfis individuais ou classificação de locais para campanhas.</p>
     </section>
@@ -33,6 +34,7 @@
             <option value="blank">Votos brancos (% votantes)</option>
             <option value="null">Votos nulos (% votantes)</option>
             <option value="delta_turnout">Variação no comparecimento (pp)</option>
+            <option value="delta_candidate">Variação histórica da candidatura (pp)</option>
           </select>
         </div>
         <div class="control" id="candidate-wrap" hidden><label for="candidate">Candidatura registrada</label><select id="candidate"></select></div>
@@ -60,6 +62,35 @@
         </aside>
       </div>
     </section>
+    <section class="research-section" aria-labelledby="research-title">
+      <div class="section-heading"><div class="eyebrow">CAMADAS ANALÍTICAS · E012</div><h2 id="research-title">Relações municipais e validação estatística</h2>
+      <p class="research-note">Análises retrospectivas e descritivas; a relação entre dois indicadores agregados não estabelece causalidade nem a preferência de um eleitor individual.</p></div>
+      <div class="research-grid">
+        <article class="research-card">
+          <h3>Censo 2022 × comparecimento</h3>
+          <p class="micro">Cada ponto representa um município da UF selecionada. A análise mostra associação agregada, sem ajuste causal.</p>
+          <label class="research-label" for="scatter-x">Eixo horizontal</label>
+          <select id="scatter-x"><option value="population_2022">População residente — log₁₀(1 + habitantes)</option><option value="density_2022_km2">Densidade demográfica — log₁₀(1 + hab./km²)</option></select>
+          <svg id="census-scatter" viewBox="0 0 650 360" role="img" aria-label="Dispersão municipal entre indicador do Censo e taxa de comparecimento"></svg>
+          <p class="research-metric" id="scatter-summary">Carregando indicadores do Censo…</p>
+          <p class="micro">Ano do comparecimento: <span id="scatter-year">2022</span>. População e densidade referem-se ao Censo 2022; eleitores aptos não equivalem à população residente.</p>
+        </article>
+        <article class="research-card">
+          <h3>Comparação de modelos — E006 a E010</h3>
+          <p class="micro">Erro absoluto médio (MAE) nas 27 rodadas de validação com uma UF inteira fora do treinamento. Menor é melhor.</p>
+          <svg id="model-chart" viewBox="0 0 650 350" role="img" aria-label="Comparativo dos erros absolutos médios por modelo"></svg>
+          <p class="research-metric" id="model-summary">Carregando resultados reproduzidos…</p>
+          <p class="micro">A ridge com correção regional foi proposta após a E006, e os modelos espaciais após a E009: as comparações continuam exploratórias, não são previsões futuras de votos em candidaturas.</p>
+        </article>
+        <article class="research-card">
+          <h3>Dependência espacial dos resíduos</h3>
+          <p class="micro">Moran's I global (E008) e intrauf (E009) usam grafos e centralizações diferentes. Não são diretamente comparáveis como redução percentual.</p>
+          <svg id="moran-chart" viewBox="0 0 650 350" role="img" aria-label="Autocorrelação espacial residual Moran I"></svg>
+          <p class="research-metric" id="moran-summary">Carregando testes condicionais…</p>
+          <p class="micro">499 permutações por configuração; p-valor exploratório de 0,002. Correlação espacial não identifica mecanismo causal nem influência entre eleitores.</p>
+        </article>
+      </div>
+    </section>
     <section class="method" aria-labelledby="method-title">
       <div class="section-heading"><div class="eyebrow">FONTES E QUALIDADE</div><h2 id="method-title">Como interpretar estes dados</h2></div>
       <div class="method-grid">
@@ -67,7 +98,7 @@
         <article><span class="number">02</span><h3>Compatibilidade geográfica</h3><p>Municípios são identificados pelo código IBGE de sete dígitos, reconciliado com o TSE. O mapa de 2022 serve como referência territorial de exibição para os dois anos.</p></article>
         <article><span class="number">03</span><h3>Exceções transparentes</h3><p>Um município do Amazonas possui uma exceção de 84 eleitores aptos no denominador de 2022; a interface sinaliza essa limitação. Não inferimos intenção de voto de indivíduos.</p></article>
       </div>
-      <p class="source-line"><strong>Fontes:</strong> <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener noreferrer">Portal de Dados Abertos do TSE ↗</a> · <a href="https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais.html" target="_blank" rel="noopener noreferrer">Malhas Territoriais IBGE ↗</a> · <a href="https://github.com/romulobrito/electoral-spatial-analysis/tree/feat/e011-public-electoral-atlas" target="_blank" rel="noopener noreferrer">Protocolo e código-fonte ↗</a></p>
+      <p class="source-line"><strong>Fontes:</strong> <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener noreferrer">Portal de Dados Abertos do TSE ↗</a> · <a href="https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais.html" target="_blank" rel="noopener noreferrer">Malhas Territoriais IBGE ↗</a> · <a href="https://github.com/romulobrito/electoral-spatial-analysis" target="_blank" rel="noopener noreferrer">Protocolo e código-fonte ↗</a></p>
       <details class="provenance"><summary>Proveniência e verificação dos arquivos</summary><pre id="provenance">Carregando manifesto…</pre></details>
     </section>
   </main>
