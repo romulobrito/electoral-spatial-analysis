@@ -12,6 +12,8 @@ import shutil
 from collections import Counter
 from pathlib import Path
 
+from .analytics import matched_candidacies, census_indicators, validation_diagnostics
+
 E005_SHA = "2b84fd89497c10a9d47f6a1a1793da144ac1be845df97605101607e424e1323d"
 IBGE_GEOMETRY_SHA = "9c904fa1feb978a89042bfecd7758e571266f285d6122a4ff02ffe37bffb76a2"
 EXCEPTIONAL_AM_CODE = "1302603"
@@ -171,12 +173,20 @@ def normalize_geometries(gis: object, panel: dict) -> dict:
     return regions
 
 
-def create_site(panel: dict, gis: object, template_dir: Path, dest: Path) -> dict:
+def create_site(panel: dict, gis: object, template_dir: Path, dest: Path, *, census_bytes: bytes | None = None, reports: Path | None = None) -> dict:
     """Fail closed before creating any public assets; no partial export."""
     if dest.exists():
         raise FileExistsError(f"Cannot overwrite published atlas directory: {dest}")
     rows, metadata = normalize_panel(panel)
     regions = normalize_geometries(gis, rows)
+    if census_bytes is None or reports is None:
+        raise ValueError('E012 requires frozen Census and scientific diagnostics')
+    matches = matched_candidacies(metadata['candidate_options'])
+    indicators, census_meta = census_indicators(census_bytes, rows)
+    science = validation_diagnostics(reports)
+    metadata['matched_candidate_labels'] = matches
+    metadata['census'] = census_meta
+    metadata['research_panel_version'] = 'E012'
     for asset in ("index.html", "app.js", "styles.css"):
         if not (template_dir / asset).is_file():
             raise ValueError(f"Missing static site template: {asset}")
@@ -185,6 +195,8 @@ def create_site(panel: dict, gis: object, template_dir: Path, dest: Path) -> dic
         shutil.copy2(template_dir / asset, dest / asset)
     _json_dump(dest / "data" / "municipalities.json", rows)
     _json_dump(dest / "data" / "metadata.json", metadata)
+    _json_dump(dest / "data" / "census.json", indicators)
+    _json_dump(dest / "data" / "research.json", science)
     for uf, features in regions.items():
         _json_dump(
             dest / "data" / "states" / f"{uf}.geojson",
@@ -195,6 +207,9 @@ def create_site(panel: dict, gis: object, template_dir: Path, dest: Path) -> dic
     manifest = {
         "municipalities": EXPECTED_MUNICIPALITIES,
         "uf_files": len(regions),
+        "census_sha256": census_meta["sha256"],
+        "matched_candidate_labels": len(matches),
+        "research_version": "E012",
         "files": len(files),
         "bytes_total": size_bytes,
         "source_panel_sha256": E005_SHA,
@@ -210,6 +225,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--panel", type=Path, required=True)
     parser.add_argument("--geometry", type=Path, required=True)
+    parser.add_argument("--census", type=Path, required=True)
+    parser.add_argument("--reports", type=Path, default=Path("reports"))
     parser.add_argument("--template-dir", type=Path, default=Path("atlas/web"))
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
@@ -224,7 +241,7 @@ def main() -> int:
     path = f"/vsizip/{args.geometry.resolve()}/BR_Municipios_2022.shp"
     gis = pyogrio.read_dataframe(path, columns=["CD_MUN", "NM_MUN", "SIGLA_UF"])
     panel = json.loads(panel_bytes)
-    manifest = create_site(panel, gis, args.template_dir, args.out)
+    manifest = create_site(panel, gis, args.template_dir, args.out, census_bytes=args.census.read_bytes(), reports=args.reports)
     print(json.dumps(manifest, ensure_ascii=False))
     return 0
 
