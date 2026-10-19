@@ -191,7 +191,7 @@ def create_site(panel: dict, gis: object, template_dir: Path, dest: Path, *, cen
         if not (template_dir / asset).is_file():
             raise ValueError(f"Missing static site template: {asset}")
     dest.mkdir(parents=True)
-    for asset in ("index.html", "app.js", "styles.css"):
+    for asset in ("index.html", "app.js", "research.js", "styles.css"):
         shutil.copy2(template_dir / asset, dest / asset)
     _json_dump(dest / "data" / "municipalities.json", rows)
     _json_dump(dest / "data" / "metadata.json", metadata)
