@@ -92,7 +92,8 @@ function detail(){
  parent.appendChild(dl);
  if(row.turnout_denominator_caveat){let p=document.createElement("p");p.className="caveat";p.textContent="Ressalva: denominador de 2022 pode excluir 84 eleitores aptos de seção excepcional.";parent.appendChild(p);}
  let title=document.createElement("h4");title.textContent="Candidaturas registradas · "+A.year;parent.appendChild(title);
- let table=document.createElement("table");table.className="candidate-table",head=document.createElement("thead"),tr=document.createElement("tr");
+ let table=document.createElement("table");table.className="candidate-table";
+ let head=document.createElement("thead"),tr=document.createElement("tr");
  for(let t of ["Candidatura","Votos","% válidos"]){let th=document.createElement("th");th.textContent=t;tr.appendChild(th);}head.appendChild(tr);table.appendChild(head);
  let body=document.createElement("tbody");
  for(let [number,name] of Object.entries(A.meta.candidate_options[A.year]).sort((a,b)=>+a[0]-+b[0])){
