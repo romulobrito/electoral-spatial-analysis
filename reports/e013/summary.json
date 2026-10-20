@@ -1,0 +1,97 @@
+{
+  "stage": "E013",
+  "source_run": "https://github.com/romulobrito/electoral-spatial-analysis/actions/runs/39326818185",
+  "source_artifact_id": 12222407757,
+  "municipalities": 5569,
+  "uf_folds": 27,
+  "seed": 2718,
+  "models": [
+    {
+      "id": "persistence",
+      "mae_pp": 2.13550811315029,
+      "rmse_pp": 2.857656580760781
+    },
+    {
+      "id": "ridge",
+      "mae_pp": 1.9567342399383514,
+      "rmse_pp": 2.5023719677933345
+    },
+    {
+      "id": "ridge_regional",
+      "mae_pp": 1.7914991430214526,
+      "rmse_pp": 2.286227933257618
+    },
+    {
+      "id": "quadratic",
+      "mae_pp": 1.938276706569394,
+      "rmse_pp": 2.5226317296277627,
+      "delta_mae_vs_e007_pp": 0.14677756354794136,
+      "uf_bootstrap_95ci_pp": [
+        -0.02436489890079275,
+        0.33267676334015855
+      ]
+    },
+    {
+      "id": "quadratic_regional",
+      "mae_pp": 1.816672754140309,
+      "rmse_pp": 2.34815767001025,
+      "delta_mae_vs_e007_pp": 0.0251736111188563,
+      "uf_bootstrap_95ci_pp": [
+        -0.03803418666399905,
+        0.11471433092043878
+      ]
+    }
+  ],
+  "multivariate": {
+    "method": "Descriptive municipality-level UF fixed-effects OLS with UF clustered standard errors; response change turnout 2026–2022 pp",
+    "r2_in_sample": 0.48793500337861695,
+    "features": [
+      {
+        "name": "turnout_2022",
+        "beta_pp_per_sd": -1.5119415301149277,
+        "ci95": [
+          -1.8883820080678733,
+          -1.1355010521619822
+        ],
+        "partial_r2": 0.2524630462434644
+      },
+      {
+        "name": "log_population_2022",
+        "beta_pp_per_sd": -0.23772254502486023,
+        "ci95": [
+          -0.457266696033914,
+          -0.01817839401580648
+        ],
+        "partial_r2": 0.006383717882207818
+      },
+      {
+        "name": "log_density_2022",
+        "beta_pp_per_sd": 0.24362145733336638,
+        "ci95": [
+          0.042579480572213585,
+          0.44466343409451914
+        ],
+        "partial_r2": 0.005082110203643686
+      }
+    ]
+  },
+  "conditional_moran": {
+    "graph": "queen native IBGE 2022 within-UF",
+    "connected_nodes": 5566,
+    "permutations": 499,
+    "ridge_regional": {
+      "I": 0.28491080050458656,
+      "p": 0.002
+    },
+    "quadratic_regional": {
+      "I": 0.2849013924179126,
+      "p": 0.002
+    }
+  },
+  "limitations": [
+    "Exploratory nonlinear comparison; no independent future-election validation",
+    "In-sample UF-FE R² is descriptive, not cross-state out-of-sample R²",
+    "Cluster intervals based on 27 UFs; marginal associations are noncausal",
+    "No candidate vote forecast, individual behavior inference or geographic persuasion scoring"
+  ]
+}
