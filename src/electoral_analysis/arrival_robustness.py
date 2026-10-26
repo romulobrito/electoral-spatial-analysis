@@ -14,8 +14,8 @@ from pathlib import Path
 
 import numpy as np
 
-from .arrival_model_integration import load_static, online_ridge
 from .arrival_model_integration import extend_path as e015_extend_path
+from .arrival_model_integration import load_static, online_ridge
 from .arrival_selection_stress import STAGES, load_population, order_paths
 from .residual_diagnostics import STATE_REGION
 
