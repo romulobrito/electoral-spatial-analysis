@@ -59,3 +59,11 @@ def test_out_of_support_detected():
     hidden=np.arange(10,30)
     d,share=support_diagnostics(x,seen,hidden,np.ones(30))
     assert share>.35 and np.max(d)>0
+
+
+def test_all_municipalities_revealed():
+    pop, x = fixture()
+    rows = extend_path(pop, x, list(range(100)), thresholds=(.99,))
+    for row in rows:
+        if row["method"].startswith("e016"):
+            assert row["abs_error_pp"] == pytest.approx(0.0)
