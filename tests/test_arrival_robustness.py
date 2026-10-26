@@ -2,7 +2,11 @@
 import numpy as np
 import pytest
 
-from electoral_analysis.arrival_robustness import extend_path, guarded_delta, support_diagnostics
+from electoral_analysis.arrival_robustness import (
+    extend_path,
+    guarded_delta,
+    support_diagnostics,
+)
 
 
 def fixture():
