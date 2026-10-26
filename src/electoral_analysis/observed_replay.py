@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse
 import csv
+import itertools
 import json
 from pathlib import Path
 
@@ -21,7 +22,7 @@ def audit(path: Path) -> dict:
             raise ValueError("Invalid observed count/progress")
         rows.append({"time": r["timestamp_brt"], "progress_pct": progress,
                      "a": a, "b": b, "archive": r["archive_source"]})
-    for p,q in zip(rows,rows[1:]):
+    for p,q in itertools.pairwise(rows):
         if not (p["time"] < q["time"] and p["a"] <= q["a"] and p["b"] <= q["b"]
                 and p["progress_pct"] <= q["progress_pct"]):
             raise ValueError("Unordered or decreasing historical partial totals")
