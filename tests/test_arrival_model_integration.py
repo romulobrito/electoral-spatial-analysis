@@ -1,6 +1,7 @@
 """E015 leakage and fallback tests on synthetic municipality observations."""
 import numpy as np
 import pytest
+
 from electoral_analysis.arrival_model_integration import extend_path, online_ridge
 
 
