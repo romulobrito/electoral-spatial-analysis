@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import itertools
 import json
 import math
 import random
@@ -123,7 +124,7 @@ def _projections(path: Path, truth: dict) -> list[dict]:
     for key, points in series.items():
         ordered = sorted(points)
         if any(right[1] + 1e-9 < left[1]
-               for left, right in zip(ordered, ordered[1:])):
+               for left, right in itertools.pairwise(ordered)):
             raise ValueError(f"Decreasing snapshot progress; investigate revisions: {key}")
     return parsed
 
