@@ -16,7 +16,10 @@ from pathlib import Path
 import numpy as np
 
 from .arrival_selection_stress import (
-    STAGES, evaluate_path, load_population, order_paths,
+    STAGES,
+    evaluate_path,
+    load_population,
+    order_paths,
 )
 from .ibge_turnout import validate_ibge_response
 from .residual_diagnostics import IBGE_SHA, REGIONAL_SHRINKAGE, STATE_REGION
