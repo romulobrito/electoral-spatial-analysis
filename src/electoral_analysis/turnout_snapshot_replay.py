@@ -12,7 +12,6 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 REQUIRED = (
     "election_id", "unit_id", "source_generated_utc", "received_utc",
     "reported_sections", "total_sections", "eligible_reported",
