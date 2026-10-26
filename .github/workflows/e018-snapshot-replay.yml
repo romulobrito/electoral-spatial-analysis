@@ -1,0 +1,52 @@
+name: E018 snapshot replay contract and synthetic plots
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/e018-live-snapshot-audit]
+permissions:
+  contents: read
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev]' matplotlib
+      - run: python -m pytest -q
+      - run: python -m ruff check src tests
+      - name: Create clearly marked synthetic cumulative snapshots
+        run: |
+          mkdir -p outputs/e018/input
+          python - <<'PY'
+          import csv, hashlib
+          from pathlib import Path
+          cols = ('election_id','unit_id','source_generated_utc','received_utc','reported_sections','total_sections','eligible_reported','attended_reported','source_sha256')
+          rows = [
+            ('synthetic-election','A','2026-10-25T19:00:00Z','2026-10-25T19:01:00Z',1,4,100,75),
+            ('synthetic-election','B','2026-10-25T19:01:00Z','2026-10-25T19:02:00Z',1,4,120,80),
+            ('synthetic-election','A','2026-10-25T19:04:00Z','2026-10-25T19:05:00Z',2,4,220,170),
+            ('synthetic-election','B','2026-10-25T19:06:00Z','2026-10-25T19:07:00Z',3,4,340,240),
+          ]
+          with Path('outputs/e018/input/synthetic_snapshots.csv').open('w',newline='') as f:
+              w=csv.writer(f);w.writerow(cols)
+              for i,r in enumerate(rows):
+                  w.writerow((*r,hashlib.sha256(f'synthetic-{i}'.encode()).hexdigest()))
+          PY
+      - name: Replay and plot synthetic diagnostics
+        run: |
+          python -m electoral_analysis.turnout_snapshot_replay \
+            --events outputs/e018/input/synthetic_snapshots.csv \
+            --out-dir outputs/e018/replay
+          python -m electoral_analysis.turnout_snapshot_figures \
+            --source outputs/e018/replay/replay.csv \
+            --out-dir outputs/e018/figures \
+            --label "SYNTHETIC ONLY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e018-synthetic-snapshot-replay-figures
+          path: outputs/e018/
+          retention-days: 14
+          if-no-files-found: warn
