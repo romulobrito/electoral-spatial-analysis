@@ -8,7 +8,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 from collections import defaultdict
 from pathlib import Path
 
@@ -18,10 +17,10 @@ from .arrival_model_integration import load_static, online_ridge
 from .arrival_robustness import (
     MAX_ABSOLUTE_DELTA_PP,
     TRAIN_QUANTILE_PAD_PP,
-    extend_path as e016_extend_path,
     reference_uf_delta,
     support_diagnostics,
 )
+from .arrival_robustness import extend_path as e016_extend_path
 from .arrival_selection_stress import STAGES, load_population, order_paths
 
 # Fixed policy grid; the development split chooses among these and the UF
