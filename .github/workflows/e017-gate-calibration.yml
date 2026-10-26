@@ -1,0 +1,51 @@
+name: E017 gate calibration with charts
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/e017-gate-calibration-and-charts]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev]' matplotlib
+      - name: All tests and lint
+        run: |
+          python -m pytest -q
+          python -m ruff check src tests
+      - uses: actions/download-artifact@v4
+        with:
+          name: e005-neutral-aggregated-results
+          path: .
+          run-id: 39069589159
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: e006-ibge-turnout-validation
+          path: .
+          run-id: 39072126444
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Reproduce the 245 paths and render plots
+        run: |
+          python -m electoral_analysis.arrival_gate_calibration \
+            --panel outputs/e005-results/municipal_results.json \
+            --census data/reference/ibge_4714_2022.json \
+            --out-dir outputs/e017 --reps 120 --seed 20261026
+          python -m electoral_analysis.arrival_gate_figures \
+            --source outputs/e017/scenario_summary.csv \
+            --metadata outputs/e017/metadata.json \
+            --out-dir outputs/e017/figures
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e017-gate-calibration-and-charts
+          path: outputs/e017/
+          retention-days: 14
+          if-no-files-found: warn
