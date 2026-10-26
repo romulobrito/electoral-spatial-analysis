@@ -32,6 +32,8 @@ MODELS = ("e016_guarded_linear", "e016_guarded_quadratic")
 def support_diagnostics(x: np.ndarray, seen: np.ndarray, hidden: np.ndarray,
                         weights: np.ndarray) -> tuple[np.ndarray, float]:
     """Compute train-derived covariate support without hidden-year outcomes."""
+    if len(hidden) == 0:
+        return np.empty(0), 0.0
     mu = x[seen].mean(axis=0)
     std = x[seen].std(axis=0)
     if np.any(std < 1e-10):
@@ -129,7 +131,9 @@ def extend_path(pop: dict, x: np.ndarray, order: list[int],
         if not math.isclose(reconstructed, ref_estimate, abs_tol=1e-8):
             raise ValueError("E014 UF reference changed unexpectedly")
         gate = "none"
-        if seen_ufs < MIN_UFS:
+        if len(hidden) == 0:
+            gate = "all_municipalities_revealed"
+        elif seen_ufs < MIN_UFS:
             gate = "insufficient_geographic_coverage"
         elif effective_n < MIN_EFFECTIVE_MUNICIPALITIES:
             gate = "low_effective_sample_size"
