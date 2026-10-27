@@ -35,8 +35,8 @@ def test_reject_municipal_mismatch():
 
 
 def test_no_double_count_on_revision():
-    base = dict(election_id="6258", uf="AC", municipality_tse="01392",
-                total_sections=4)
+    base = {"election_id": "6258", "uf": "AC", "municipality_tse": "01392",
+                "total_sections": 4}
     a = {**base, "generated_utc": "2026-10-25T22:00:00Z",
          "received_utc": "2026-10-25T22:01:00Z", "sha256": "a",
          "reported_sections": 1, "eligible_reported": 100,
@@ -54,11 +54,11 @@ def test_no_double_count_on_revision():
 
 
 def test_reject_forged_progress():
-    row = dict(election_id="6258", uf="AC", municipality_tse="01392",
-               total_sections=4, reported_sections=2,
-               eligible_reported=200, attended_reported=150,
-               generated_utc="2026-10-25T22:00:00Z",
-               received_utc="2026-10-25T22:01:00Z", sha256="a")
+    row = {"election_id": "6258", "uf": "AC", "municipality_tse": "01392",
+               "total_sections": 4, "reported_sections": 2,
+               "eligible_reported": 200, "attended_reported": 150,
+               "generated_utc": "2026-10-25T22:00:00Z",
+               "received_utc": "2026-10-25T22:01:00Z", "sha256": "a"}
     newer = {**row, "reported_sections": 1,
              "generated_utc": "2026-10-25T22:02:00Z",
              "received_utc": "2026-10-25T22:03:00Z", "sha256": "b"}
