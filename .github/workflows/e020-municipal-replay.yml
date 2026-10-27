@@ -1,0 +1,73 @@
+name: E020 municipal EA20 offline replay
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/e020-municipal-ea20-incremental]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev]' matplotlib
+      - run: python -m pytest -q
+      - run: python -m ruff check src tests
+      - name: Simulate cumulative municipal source arrivals
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p=pathlib.Path("outputs/e020/synthetic")
+          p.mkdir(parents=True)
+          entries=[]
+          for i,(code,sa,eligible,attended) in enumerate([
+              ("01392",1,100,75),("01393",1,120,80),
+              ("01392",2,200,155),("01393",3,360,257)
+          ]):
+              value={"ele":"6258","tpabr":"mu","cdabr":code,
+                     "dg":"25/10/2026","hg":f"19:0{i}:00",
+                     "carg":[{"cd":"1"}],"s":{"ts":"4","sa":str(sa)},
+                     "e":{"esa":str(eligible),"c":str(attended)}}
+              path=p/f"snap{i}.json"
+              path.write_text(json.dumps(value))
+              entries.append(dict(raw_path=str(path),election_id=6258,
+                                  uf="AC",municipality_tse=code,
+                                  received_utc=f"2026-10-25T22:0{i}:20Z"))
+          (p/"events.jsonl").write_text(
+              "\n".join(json.dumps(e) for e in entries)+"\n"
+          )
+          PY
+          python -m electoral_analysis.municipal_ea20_replay             --json-events outputs/e020/synthetic/events.jsonl             --output outputs/e020/replay.csv
+      - name: Render figures of synthetic sequence
+        run: |
+          python - <<'PY'
+          import csv, pathlib
+          import matplotlib
+          matplotlib.use("Agg")
+          import matplotlib.pyplot as plt
+          p=pathlib.Path("outputs/e020")
+          rows=list(csv.DictReader((p/"replay.csv").open()))
+          for key,label,file in [
+              ("observed_turnout_pct","Observed turnout in reported sections","turnout"),
+              ("reported_section_coverage_pct","Coverage within observed municipalities","coverage"),
+          ]:
+              fig,ax=plt.subplots(figsize=(8,4))
+              ax.plot(range(1,len(rows)+1),[float(r[key]) for r in rows],marker="o")
+              ax.set(xlabel="Synthetic municipal snapshot received",
+                     ylabel="Percent",title="E020 — SYNTHETIC: "+label)
+              ax.grid(alpha=.2);fig.tight_layout()
+              fig.savefig(p/(file+".png"),dpi=150)
+              fig.savefig(p/(file+".svg"))
+              plt.close(fig)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e020-municipal-synthetic-replay-and-figures
+          path: outputs/e020/
+          retention-days: 14
+          if-no-files-found: warn
