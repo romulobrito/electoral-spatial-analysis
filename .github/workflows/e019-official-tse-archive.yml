@@ -1,0 +1,63 @@
+name: E019 official EA20 schema and synthetic audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/e019-official-tse-archive]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev]' matplotlib
+      - name: Test full repository and lint
+        run: |
+          python -m pytest -q
+          python -m ruff check src tests
+      - name: Simulate multiple archived EA20 replies without querying live CDN
+        run: |
+          mkdir -p outputs/e019
+          python - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import json
+          from electoral_analysis.tse_official_collector import poll_once, export_replay
+          archive = Path("outputs/e019/archive")
+          for i in range(4):
+              hour = 19 + i
+              values = {
+                  "ele":"6258", "tpabr":"br", "cdabr":"br",
+                  "dg":"25/10/2026", "hg":f"{hour:02d}:00:00",
+                  "idg":f"synthetic-{i}", "carg":[{"cd":"1"}],
+                  "s":{"ts":"10","sa":str(i+1)},
+                  "e":{"esa":str(100*(i+1)),
+                       "c":str([78,158,239,321][i])},
+              }
+              payload = json.dumps(values).encode()
+              url = ("https://resultados.tse.jus.br/oficial/ele2026/6258/"
+                     "dados/br/br-c0001-e006258-u.json")
+              def fake(url_, headers):
+                  return 200,payload,{},url
+              when = datetime(2026,10,26,hour,5,tzinfo=timezone.utc)
+              poll_once(archive,6258,fetch=fake,now=when)
+          print(export_replay(archive,Path("outputs/e019/events.csv")))
+          PY
+      - name: Reproduce E018 synthetic event graphics
+        run: |
+          python -m electoral_analysis.turnout_snapshot_replay \
+            --events outputs/e019/events.csv --out-dir outputs/e019/replay
+          python -m electoral_analysis.turnout_snapshot_figures \
+            --source outputs/e019/replay/replay.csv \
+            --out-dir outputs/e019/figures --label "E019 SYNTHETIC FIXTURE"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e019-synthetic-audit-and-plots
+          path: outputs/e019/
+          retention-days: 14
+          if-no-files-found: warn
