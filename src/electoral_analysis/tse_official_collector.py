@@ -37,7 +37,7 @@ def _number(value: object, name: str) -> int:
     if value in (None, ""):
         return 0
     if not isinstance(value, (int, str)) or isinstance(value, bool):
-        raise ValueError(f"Invalid {name}")
+        raise TypeError(f"Invalid {name}")
     s = str(value)
     if not s.isdecimal():
         raise ValueError(f"Noninteger {name}: {s!r}")
@@ -52,7 +52,7 @@ def normalize(raw: bytes, election: int, received_utc: datetime) -> dict:
         raise ValueError("Receipt timestamp must be timezone-aware")
     source = json.loads(raw)
     if not isinstance(source, dict):
-        raise ValueError("EA20 root must be an object")
+        raise TypeError("EA20 root must be an object")
     if (source.get("ele") != str(election)
             or source.get("tpabr") != "br" or source.get("cdabr") != "br"):
         raise ValueError("Incorrect election or geographic scope")
