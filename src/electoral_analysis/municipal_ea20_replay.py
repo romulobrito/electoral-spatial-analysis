@@ -6,7 +6,6 @@ import csv
 import hashlib
 import json
 import re
-from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
